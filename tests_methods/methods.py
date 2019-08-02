@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
-from project_settings import project_folders,running_test
+import project_settings
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 
@@ -23,7 +23,7 @@ class Web(object):
           self.elem=None
      
       def set_webdriver_path(self,browser):              
-          test_type=running_test()
+          test_type=project_settings.running_test()
           if test_type=="LOCAL":
              if "desktop" in browser:
                 if platform=="win32":
@@ -73,13 +73,17 @@ class Web(object):
           return self.driver 
 
       def define_working_folders(self,test_name):
-          python_modules_path=project_path+project_folders(test_name)[0]
-          webdriver_folder_path=project_path+project_folders(test_name)[1]
-          screenshots_folder_path=project_path+project_folders(test_name)[2]
-          test_screenshots_folder_path=project_path+project_folders(test_name)[3]
-          return python_modules_path,webdriver_folder_path,screenshots_folder_path,test_screenshots_folder_path      
+          ProjectSetings=project_settings.ProjectSettings(test_name)
+          tests_methods_path=project_path+ProjectSetings.project_folders[0]
+          tests_webdrivers_path=project_path+ProjectSetings.project_folders[1]
+          tests_screenshots_path=project_path+ProjectSetings.project_folders[2]
+          test_screenshots_path=project_path+ProjectSetings.project_folders[3]
+          tests_locators_path=project_path+ProjectSetings.project_folders[4]
+          return tests_methods_path,tests_webdrivers_path,tests_screenshots_path,\
+                 test_screenshots_path,tests_locators_path      
 
       def goto_url(self,browser,url):
+          # here we set value for self.driver variable
           self.driver=self.get_driver(browser)    
           self.driver.get(url)               
 
@@ -125,27 +129,196 @@ class Web(object):
           sleep(1)
           self.driver.quit() 
 
-      # def get_running_module_name(self,test_name):
-      #     if os.getcwd() not in sys.path:
-      #        sys.path.insert(0,os.getcwd())
-      #     module_name=self.import_module(test_name,None)
-      #     return module_name 
+      def get_running_module_name(self,test_name):
+          if os.getcwd() not in sys.path:
+             sys.path.insert(0,os.getcwd())
+          module_name=self.import_module(test_name,None)
+          return module_name 
 
-      # def import_module(self,package,module):
-      #     module=importlib.import_module(package+'.'+module) if module is not None else importlib.import_module(package)
-      #     return module       
+      def import_module(self,package,module):
+          module=importlib.import_module(package+'.'+module) if module is not None else importlib.import_module(package)
+          return module 
 
-# # ex : parent_module="python_modules." , submodule="bh_setstate_locators"
-# # locators are in "project path"/python_modules 
-# def import_module(package,module):
-#     module=importlib.import_module(package+'.'+module) if module is not None else importlib.import_module(package)
-#     return module
+      def test(self,test_name,driver,locator,browser):   
+          # var1 
+          # test_part pot sa-l iau din /tests_files/test_name.py     
+          test_part=self.get_running_module_name(test_name).test_part
+          #print 'X=',test_part
+          # var 2
+          # test_part pot sa-l iau din project_settings.py
+          #test_part=project_settings.ProjectSettings(test_name).test_parameters[0]
+          #print 'X=',test_part
+          # elements = list of dictionaries 
+          E=locator.get_elements(browser)
+          for i in range(len(E)):
+             for j in range(len(E[i])):
+                  if "source" in E[i][j].keys():
+                     if "source_locator_type" and "source_locator_string" in E[i][j].keys():
+                        #elem=self.get_elem(driver,E[i][j]["source_locator_type"],E[i][j]["source_locator_string"])
+                        elem=self.get_elem(E[i][j]["source_locator_type"],E[i][j]["source_locator_string"])
+                        if E[i][j]["source_tool"]=="selenium":
+                           try:
+                              if E[i][j]["screenshot"]==1 :
+                                 print 'Take screenshot of '+E[i][j]["source"]
+                                 set_elem_screenshot(driver,test_name,elem,E[i][j]["source_img_name"])
+                           except KeyError: pass
+                           try:
+                              if E[i][j]["source_click"]==1 :
+                                 #-------------------------
+                                 #print 'L=',driver.find_elements_by_xpath()
+                                 #-------------------------
+                                 self.click_elem_selenium(driver,elem,E[i][j]["source_name"])
+                           except KeyError: pass
+                           try:
+                              if E[i][j]["source_clear"]==1 :
+                                 if E[i][j]["source"] in ["textctrl","multi textctrl"]:
+                                    elem.clear()
+                                    print 'Clear : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
+                           except KeyError: pass
+                           try:
+                              if E[i][j]["source_change"]==1 :
+                                 if E[i][j]["source"] in ["textctrl","multi textctrl"]:
+                                    elem.send_keys(E[i][j]["source_changed_value"])
+                                    print 'Change value for : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
+                                 elif E[i][j]["source"] == "textctrl":
+                                    elem.send_keys(E[i][j]["source_changed_value"])
+                                    print 'Change value for : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
+                                 elif E[i][j]["source"] in ["drop-down","list"]:
+                                    #print 'L=',len(driver.window_handles)
+                                    s= Select(elem)
+                                    s.select_by_visible_text(E[i][j]["source_changed_value"])
+                                    print 'Change value for : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
+                           except KeyError: pass
+                           try:
+                              if E[i][j]["source_check"]==1:
+                                 ev=get_elem_value(driver,E[i][j]["source"],E[i][j]["source_value"],E[i][j]["source_locator_type"],E[i][j]["source_locator_string"]) 
+                                 print "Check: "+ E[i][j]["source_name"]+" "+E[i][j]["source"]
+                                 print 'ev0=',ev 
+                                 try:
+                                     print 'ev1=',len(ev)
+                                 except :pass    
+                                 if ev != E[i][j]["source_value"]:
+                                    # quit_browser(driver)
+                                    raise AssertionError("Alert ! "+E[i][j]["source_name"]+" "+E[i][j]["source"]+" changed it's default value!")                  
+                           except KeyError: pass
+                           try:
+                              if E[i][j]["source_check_presence"]==1:
+                                 if E[i][j]["source_presence"]==False and elem is None:
+                                    print 'The main element : '+E[i][j]["source"]+ ' is not present on page !'
+                           except KeyError:pass
+                        if E[i][j]["source_tool"]=="opencv":
+                           try:
+                               if E[i][j]["source_click"]==1:
+                                  reset_elem_coord(driver,elem,E[i][j]["source"])
+                                  click_elem_by_offset(driver,elem,E[i][j]["coord"],E[i][j]["source_name"])
+                           except KeyError: pass
+                        elif E[i][j]["source_tool"]=="pyautogui":
+                             try:
+                                 if E[i][j]["source_screenshot"]==1 :
+                                    set_elem_screenshot(driver,test_name,elem,E[i][j]["source_img_name"])
+                             except KeyError: pass
+                             try:
+                                 if E[i][j]["source_click"]==1 :
+                                    click_elem_pyautogui(test_name,E[i][j]["source_img_name"])
+                                    print 'Mouse to: '+E[i][j]["source_name"]
+                             except KeyError: pass
+                             try:
+                                 if E[i][j]["source_change"]==1 :
+                                    clear_elem_pyautogui(elem)
+                                    print 'Clear: '+E[i][j]["source_name"]
+                                    set_elem_value_pyautogui(E[i][j]["source_changed_value"])
+                                    print 'Change value for : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
+                             except KeyError:pass
+                     else:
+                          try:
+                              # if source is 'new window' switch to new window
+                              if E[i][j]["source"]=="previous window":
+                                 driver.switch_to.window(driver.window_handles[0])
+                          except KeyError: pass
+                          try:
+                              # if source is 'new window' switch to new window
+                              if E[i][j]["source"]=="new window":
+                                 driver.switch_to.window(driver.window_handles[1])
+                          except KeyError: pass
+                          try:
+                              # if source is 'new window' switch to new window
+                              if E[i][j]["source"]=="active window":
+                                 driver.switch_to.window(driver.window_handles[-1])
+                          except KeyError: pass
+                          try:
+                              if E[i][j]["source"]=="url":
+                                 driver.get(E[i][j]["url"])
+                                 if "desktop" in browser:
+                                    if "chrome" in browser:
+                                       driver.fullscreen_window()   
+                                    else:driver.maximize_window() 
+                          except KeyError: pass   
+                          try:
+                              if E[i][j]["source"]=="close page":
+                                 driver.close()
+                          except KeyError: pass         
+                          try:
+                              # if source is 'alert' chech text alert
+                              if E[i][j]["source"]=="alert":
+                                 try:
+                                     from selenium.common.exceptions import TimeoutException
+                                     WebDriverWait(driver,10).until(EC.alert_is_present(),\
+                                     'Timed out waiting for PA creation '+' confirmation popup to appear.')
+                                     alert = driver.switch_to.alert
+                                     alert.accept()
+                                     print("alert accepted")
+                                 except TimeoutException:
+                                        print("no alert")
+                          except KeyError: pass
+                          try:
+                              # launch app from terminal
+                              if E[i][j]["source"]=="terminal":
+                                 from threading import Thread
+                                 cmd="/Users/blackdesign/Desktop/cbt_tunnels-macos-x64 --username bcalin@perfectforms.com --authkey u9e112e2f5b4b0c6"
+                                 t = Thread(target = lambda: os.system(cmd))
+                                 t.start()
+                          except KeyError: pass
+                          try:
+                              if E[i][j]["source"]=="wait":
+                                 print 'Wait '+str(E[i][j]["seconds"])+' sec !'
+                                 WebDriverWait(driver,E[i][j]["seconds"])
+                                 sleep(E[i][j]["seconds"])
+                          except KeyError: pass
+                          try:
+                              if E[i][j]["source"]=="write to file":
+                                 f=open('/Users/blackdesign/Desktop/log2.txt','w')
+                                 sys.stdout = f
+                                 sys.stdout.close()
+                          except KeyError: pass
+                  # target we will use only on drop-down and how selenium
+                  # drop-down sucks drop-down will be made by pyautogui
+                  if "target" in E[i][j].keys():
+                     if "target_locator_type" and "target_locator_string" in E[i][j].keys():
+                        elem=get_elem(driver,E[i][j]["target_locator_type"],E[i][j]["target_locator_string"])
+                        if E[i][j]["target_tool"]=="pyautogui":
+                           try:
+                               if E[i][j]["target_screenshot"]==1 :
+                                  set_elem_screenshot(driver,test_name,elem,E[i][j]["target_img_name"])
+                           except KeyError:pass
+                           try:
+                                 if E[i][j]["target_click"]==1 :
+                                    #click_elem_pyautogui(E[i][j]["target_img_path"])
+                                    click_elem_pyautogui(test_name,E[i][j]["target_img_name"])
+                                    print 'Mouse to: '+E[i][j]["target_name"]
+                           except KeyError: pass
+                           try:
+                                 if E[i][j]["target_change"]==1 :
+                                    clear_elem_pyautogui(elem)
+                                    print 'Clear: '+E[i][j]["target_name"]
+                                    set_elem_value_pyautogui(E[i][j]["target_changed value"])
+                                    print 'Change value for : '+E[i][j]["target_name"]+" "+E[i][j]["target"]
+                           except KeyError: pass
+                           try:
+                                 if E[i][j]["drag-drop"]==1 :
+                                    drag_on_target_pyautogui(test_name,E[i][j]["target_img_name"])
+                                    print 'Drag : '+E[i][j]["source_name"]+' on '+E[i][j]["target_name"]
+                           except KeyError:pass        
 
-# def get_running_module_name(test_name):
-#     if os.getcwd() not in sys.path:
-#        sys.path.insert(0,os.getcwd())
-#     module_name=import_module(test_name,None)
-#     return module_name
 
 # def set_webdriver(test_name,browser):      
 #     test_type=get_running_module_name(test_name).test_type
@@ -278,18 +451,7 @@ class Web(object):
 #            os.mkdir(path)
 #     except OSError as e:os.remove(path);raise AssertionError(str(e))   
 
-# def define_working_folders(test_name):
-#     python_modules_path=project_path+project_folders(test_name)[0]
-#     webdriver_folder_path=project_path+project_folders(test_name)[1]
-#     screenshots_folder_path=project_path+project_folders(test_name)[2]
-#     test_screenshots_folder_path=project_path+project_folders(test_name)[3]
-#     #if cnv_name != None:
-#     #   screenshots_folder_path=project_path+project_folders(test_name)[1]
-#     #   canvas_screenshots_path=screenshots_folder_path+cnv_name 
-#     #   return canvas_screenshots_path,python_modules_path,webdriver_folder_path
-#     #else: return python_modules_path,webdriver_folder_path,screenshots_folder_path,test_screenshots_folder_path 
-#     return python_modules_path,webdriver_folder_path,screenshots_folder_path,test_screenshots_folder_path    
-      
+     
 # def close_test(error_type):
 #     if error_type=="bug":
 #        raise AssertionError('THIS IS A BUG ! I will close test !')    
@@ -489,175 +651,3 @@ class Web(object):
 #     # dictionary with element key and center coordinates value
 #     Ecc=opencv.find_elements(source_img_path)
 #     return Ecc
-
-# def test(test_name,driver,locator,browser):     
-#     test_part=get_running_module_name(test_name).test_part
-#     # elements = list of dictionaries 
-#     E=locator.get_elements(browser)
-#     for i in range(len(E)):
-#        for j in range(len(E[i])):
-#             if "source" in E[i][j].keys():
-#                if "source_locator_type" and "source_locator_string" in E[i][j].keys():
-#                   elem=get_elem(driver,E[i][j]["source_locator_type"],E[i][j]["source_locator_string"])
-#                   if E[i][j]["source_tool"]=="selenium":
-#                      try:
-#                         if E[i][j]["screenshot"]==1 :
-#                            print 'Take screenshot of '+E[i][j]["source"]
-#                            set_elem_screenshot(driver,test_name,elem,E[i][j]["source_img_name"])
-#                      except KeyError: pass
-#                      try:
-#                         if E[i][j]["source_click"]==1 :
-#                            #-------------------------
-#                            #print 'L=',driver.find_elements_by_xpath()
-#                            #-------------------------
-#                            click_elem_selenium(driver,elem,E[i][j]["source_name"])
-#                      except KeyError: pass
-#                      try:
-#                         if E[i][j]["source_clear"]==1 :
-#                            if E[i][j]["source"] in ["textctrl","multi textctrl"]:
-#                               elem.clear()
-#                               print 'Clear : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
-#                      except KeyError: pass
-#                      try:
-#                         if E[i][j]["source_change"]==1 :
-#                            if E[i][j]["source"] in ["textctrl","multi textctrl"]:
-#                               elem.send_keys(E[i][j]["source_changed_value"])
-#                               print 'Change value for : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
-#                            elif E[i][j]["source"] == "textctrl":
-#                               elem.send_keys(E[i][j]["source_changed_value"])
-#                               print 'Change value for : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
-#                            elif E[i][j]["source"] in ["drop-down","list"]:
-#                               #print 'L=',len(driver.window_handles)
-#                               s= Select(elem)
-#                               s.select_by_visible_text(E[i][j]["source_changed_value"])
-#                               print 'Change value for : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
-#                      except KeyError: pass
-#                      try:
-#                         if E[i][j]["source_check"]==1:
-#                            ev=get_elem_value(driver,E[i][j]["source"],E[i][j]["source_value"],E[i][j]["source_locator_type"],E[i][j]["source_locator_string"]) 
-#                            print "Check: "+ E[i][j]["source_name"]+" "+E[i][j]["source"]
-#                            print 'ev0=',ev 
-#                            try:
-#                                print 'ev1=',len(ev)
-#                            except :pass    
-#                            if ev != E[i][j]["source_value"]:
-#                               # quit_browser(driver)
-#                               raise AssertionError("Alert ! "+E[i][j]["source_name"]+" "+E[i][j]["source"]+" changed it's default value!")                  
-#                      except KeyError: pass
-#                      try:
-#                         if E[i][j]["source_check_presence"]==1:
-#                            if E[i][j]["source_presence"]==False and elem is None:
-#                               print 'The main element : '+E[i][j]["source"]+ ' is not present on page !'
-#                      except KeyError:pass
-#                   if E[i][j]["source_tool"]=="opencv":
-#                      try:
-#                          if E[i][j]["source_click"]==1:
-#                             reset_elem_coord(driver,elem,E[i][j]["source"])
-#                             click_elem_by_offset(driver,elem,E[i][j]["coord"],E[i][j]["source_name"])
-#                      except KeyError: pass
-#                   elif E[i][j]["source_tool"]=="pyautogui":
-#                        try:
-#                            if E[i][j]["source_screenshot"]==1 :
-#                               set_elem_screenshot(driver,test_name,elem,E[i][j]["source_img_name"])
-#                        except KeyError: pass
-#                        try:
-#                            if E[i][j]["source_click"]==1 :
-#                               click_elem_pyautogui(test_name,E[i][j]["source_img_name"])
-#                               print 'Mouse to: '+E[i][j]["source_name"]
-#                        except KeyError: pass
-#                        try:
-#                            if E[i][j]["source_change"]==1 :
-#                               clear_elem_pyautogui(elem)
-#                               print 'Clear: '+E[i][j]["source_name"]
-#                               set_elem_value_pyautogui(E[i][j]["source_changed_value"])
-#                               print 'Change value for : '+E[i][j]["source_name"]+" "+E[i][j]["source"]
-#                        except KeyError:pass
-#                else:
-#                     try:
-#                         # if source is 'new window' switch to new window
-#                         if E[i][j]["source"]=="previous window":
-#                            driver.switch_to.window(driver.window_handles[0])
-#                     except KeyError: pass
-#                     try:
-#                         # if source is 'new window' switch to new window
-#                         if E[i][j]["source"]=="new window":
-#                            driver.switch_to.window(driver.window_handles[1])
-#                     except KeyError: pass
-#                     try:
-#                         # if source is 'new window' switch to new window
-#                         if E[i][j]["source"]=="active window":
-#                            driver.switch_to.window(driver.window_handles[-1])
-#                     except KeyError: pass
-#                     try:
-#                         if E[i][j]["source"]=="url":
-#                            driver.get(E[i][j]["url"])
-#                            if "desktop" in browser:
-#                               if "chrome" in browser:
-#                                  driver.fullscreen_window()   
-#                               else:driver.maximize_window() 
-#                     except KeyError: pass   
-#                     try:
-#                         if E[i][j]["source"]=="close page":
-#                            driver.close()
-#                     except KeyError: pass         
-#                     try:
-#                         # if source is 'alert' chech text alert
-#                         if E[i][j]["source"]=="alert":
-#                            try:
-#                                from selenium.common.exceptions import TimeoutException
-#                                WebDriverWait(driver,10).until(EC.alert_is_present(),\
-#                                'Timed out waiting for PA creation '+' confirmation popup to appear.')
-#                                alert = driver.switch_to.alert
-#                                alert.accept()
-#                                print("alert accepted")
-#                            except TimeoutException:
-#                                   print("no alert")
-#                     except KeyError: pass
-#                     try:
-#                         # launch app from terminal
-#                         if E[i][j]["source"]=="terminal":
-#                            from threading import Thread
-#                            cmd="/Users/blackdesign/Desktop/cbt_tunnels-macos-x64 --username bcalin@perfectforms.com --authkey u9e112e2f5b4b0c6"
-#                            t = Thread(target = lambda: os.system(cmd))
-#                            t.start()
-#                     except KeyError: pass
-#                     try:
-#                         if E[i][j]["source"]=="wait":
-#                            print 'Wait '+str(E[i][j]["seconds"])+' sec !'
-#                            WebDriverWait(driver,E[i][j]["seconds"])
-#                            sleep(E[i][j]["seconds"])
-#                     except KeyError: pass
-#                     try:
-#                         if E[i][j]["source"]=="write to file":
-#                            f=open('/Users/blackdesign/Desktop/log2.txt','w')
-#                            sys.stdout = f
-#                            sys.stdout.close()
-#                     except KeyError: pass
-#             # target we will use only on drop-down and how selenium
-#             # drop-down sucks drop-down will be made by pyautogui
-#             if "target" in E[i][j].keys():
-#                if "target_locator_type" and "target_locator_string" in E[i][j].keys():
-#                   elem=get_elem(driver,E[i][j]["target_locator_type"],E[i][j]["target_locator_string"])
-#                   if E[i][j]["target_tool"]=="pyautogui":
-#                      try:
-#                          if E[i][j]["target_screenshot"]==1 :
-#                             set_elem_screenshot(driver,test_name,elem,E[i][j]["target_img_name"])
-#                      except KeyError:pass
-#                      try:
-#                            if E[i][j]["target_click"]==1 :
-#                               #click_elem_pyautogui(E[i][j]["target_img_path"])
-#                               click_elem_pyautogui(test_name,E[i][j]["target_img_name"])
-#                               print 'Mouse to: '+E[i][j]["target_name"]
-#                      except KeyError: pass
-#                      try:
-#                            if E[i][j]["target_change"]==1 :
-#                               clear_elem_pyautogui(elem)
-#                               print 'Clear: '+E[i][j]["target_name"]
-#                               set_elem_value_pyautogui(E[i][j]["target_changed value"])
-#                               print 'Change value for : '+E[i][j]["target_name"]+" "+E[i][j]["target"]
-#                      except KeyError: pass
-#                      try:
-#                            if E[i][j]["drag-drop"]==1 :
-#                               drag_on_target_pyautogui(test_name,E[i][j]["target_img_name"])
-#                               print 'Drag : '+E[i][j]["source_name"]+' on '+E[i][j]["target_name"]
-#                      except KeyError:pass
