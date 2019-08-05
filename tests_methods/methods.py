@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os,sys,importlib,opencv,requests,pyautogui
+import os,sys,importlib,requests,pyautogui,opencv
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
@@ -11,6 +11,9 @@ from selenium.webdriver.common.keys import Keys
 import project_settings
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
+try:
+    from PIL import Image
+except ImportError:raise AssertionError("Y O U   M U S T   I N S T A L L   P I L(P I L L O W) !") 
 
 # some initial datas      
 platform=sys.platform
@@ -21,10 +24,13 @@ class Web(object):
           self.test_name=test_name
           self.driver=None
           self.elem=None
+          #-------------------
+          self.ProjectSettings=project_settings.ProjectSettings(self.test_name)
+          self.test_type=project_settings.running_test()
      
       def set_webdriver_path(self,browser):              
-          test_type=project_settings.running_test()
-          if test_type=="LOCAL":
+          #test_type=project_settings.running_test()
+          if self.test_type=="LOCAL":
              if "desktop" in browser:
                 if platform=="win32":
                    # names of webdrivers must be like below
@@ -73,12 +79,18 @@ class Web(object):
           return self.driver 
 
       def define_working_folders(self,test_name):
-          ProjectSetings=project_settings.ProjectSettings(test_name)
-          tests_methods_path=project_path+ProjectSetings.project_folders[0]
-          tests_webdrivers_path=project_path+ProjectSetings.project_folders[1]
-          tests_screenshots_path=project_path+ProjectSetings.project_folders[2]
-          test_screenshots_path=project_path+ProjectSetings.project_folders[3]
-          tests_locators_path=project_path+ProjectSetings.project_folders[4]
+         #  ProjectSetings=project_settings.ProjectSettings(test_name)
+         #  tests_methods_path=project_path+ProjectSettings.project_folders[0]
+         #  tests_webdrivers_path=project_path+ProjectSettings.project_folders[1]
+         #  tests_screenshots_path=project_path+ProjectSettings.project_folders[2]
+         #  test_screenshots_path=project_path+ProjectSettings.project_folders[3]
+         #  tests_locators_path=project_path+ProjectSettings.project_folders[4]
+         
+          tests_methods_path=project_path+self.ProjectSettings.project_folders[0]
+          tests_webdrivers_path=project_path+self.ProjectSettings.project_folders[1]
+          tests_screenshots_path=project_path+self.ProjectSettings.project_folders[2]
+          test_screenshots_path=project_path+self.ProjectSettings.project_folders[3]
+          tests_locators_path=project_path+self.ProjectSettings.project_folders[4]
           return tests_methods_path,tests_webdrivers_path,tests_screenshots_path,\
                  test_screenshots_path,tests_locators_path      
 
@@ -139,6 +151,101 @@ class Web(object):
           module=importlib.import_module(package+'.'+module) if module is not None else importlib.import_module(package)
           return module 
 
+      def get_elem_value(self,source,source_value,locator_type,locator_string):
+          #elem=self.get_elem(self.driver,locator_type,locator_string)   
+          elem=self.get_elem(locator_type,locator_string)           
+          if source in ["check box","radio btn"]: 
+             ev=elem.is_selected() 
+          if source.__contains__("textctrl"): 
+             ev=elem.get_attribute('value')
+          if source == "drop-down":
+             # selection 
+             s= Select(elem)
+             # var1
+             #for opt in s.options:
+             #    if opt.is_selected():
+             #       cs= s.first_selected_option
+             #       ev=cs.text 
+             #    else:ev=""  
+             #------------------
+             # current selection
+             # var2
+             try:
+                 cs= s.first_selected_option
+                 ev=cs.text 
+             except NoSuchElementException:
+                    ev=""      
+          if source in ["grid cell","text"]:
+             ev=elem.text    
+             #ev=driver.find_element_by_xpath(elem_xpath).get_attribute('innerHTML')
+          # SetField,SimpleBranch
+          if source == "list":
+             s= Select(elem)
+             if source_value in [option.text for option in s.options]:
+                ev=source_value
+                s.select_by_visible_text(source_value)
+             else:ev=None      
+          return ev  
+
+      def create_screenshots_dir(self,path):
+          try:
+              if not os.path.exists(path):
+                 os.mkdir(path)
+          except OSError as e:os.remove(path);raise AssertionError(str(e))   
+
+
+      # set element screenshot
+      #def set_elem_screenshot(self,test_name,elem,elem_img_name): 
+      def set_elem_screenshot(self,test_name,browser,elem,elem_img_name):    
+          #if running_test()=='LOCAL':
+          # screenshot numai pentru LOCAL ?
+          if self.test_type=='LOCAL':             
+             elem_img_path=self.define_working_folders(test_name)[3]+elem_img_name
+             self.create_screenshots_dir(self.define_working_folders(test_name)[3])
+             #if not os.path.exists(elem_img_path):
+             try: 
+                 self.driver.get_screenshot_as_file(elem_img_path) 
+                 x=elem.location['x']
+                 y=elem.location['y']
+                 w=elem.location['x']+elem.size['width']
+                 h=elem.location['y']+elem.size['height']
+                 img=Image.open(elem_img_path)
+                 #if running_test.browser.__contains__("chrome"):
+                 #   img=img.crop((x,y,w,h))
+                 #if running_test.browser.__contains__("firefox"):
+                 #   img=img.crop((x-5,y-5,w+5,h+5))
+                 #if running_test.browser.__contains__("safari"):
+                 #   img=img.crop((x,y,w,h))   
+                 if browser.__contains__("chrome"):
+                    img=img.crop((x,y,w,h))
+                 if browser.__contains__("firefox"):
+                    img=img.crop((x-5,y-5,w+5,h+5))
+                 if browser.__contains__("safari"):
+                    img=img.crop((x,y,w,h))      
+                 img.save(elem_img_path)
+             except Exception as EC:os.remove(elem_img_path);print "Can't take screenshot ! "+str(EC)      
+          #else:raise AssertionError("SCREENSHOT IS TAKEN ONLY IN LOCAL TEST !")          
+      
+      # in our case elem is canvas , in which we have other elements 
+      def reset_elem_coord(self,elem,source):      
+          #ActionChains(driver).move_to_element_with_offset(elem,0,0).context_click().perform()
+          ActionChains(self.driver).move_to_element_with_offset(elem,0,0).click().perform()
+          print 'Reset : '+source+' coordinates !'
+
+      # elem is canvas
+      def click_elem_by_offset(self,elem,elem_coord,source_name):
+          sleep(1)
+          ActionChains(self.driver).move_to_element_with_offset(elem,elem_coord[0],elem_coord[1]).click().perform()  
+          print "Click : "+source_name+" after it's coordinates !" 
+
+      # if a canvas has elements inside we can find elements
+      #  coordinates from image screenshot with opencv
+      def get_elem_coord_from_img_with_opencv(self,test_name,source_img_name):
+          source_img_path=self.define_working_folders(test_name)[3]+source_img_name  
+          # dictionary with element key and center coordinates value
+          Ecc=opencv.find_elements(source_img_path)
+          return Ecc          
+      
       def test(self,test_name,driver,locator,browser):   
           # var1 
           # test_part pot sa-l iau din /tests_files/test_name.py     
@@ -160,7 +267,8 @@ class Web(object):
                            try:
                               if E[i][j]["screenshot"]==1 :
                                  print 'Take screenshot of '+E[i][j]["source"]
-                                 set_elem_screenshot(driver,test_name,elem,E[i][j]["source_img_name"])
+                                 #self.set_elem_screenshot(test_name,elem,E[i][j]["source_img_name"])
+                                 self.set_elem_screenshot(test_name,browser,elem,E[i][j]["source_img_name"])
                            except KeyError: pass
                            try:
                               if E[i][j]["source_click"]==1 :
@@ -191,7 +299,7 @@ class Web(object):
                            except KeyError: pass
                            try:
                               if E[i][j]["source_check"]==1:
-                                 ev=get_elem_value(driver,E[i][j]["source"],E[i][j]["source_value"],E[i][j]["source_locator_type"],E[i][j]["source_locator_string"]) 
+                                 ev=self.get_elem_value(E[i][j]["source"],E[i][j]["source_value"],E[i][j]["source_locator_type"],E[i][j]["source_locator_string"]) 
                                  print "Check: "+ E[i][j]["source_name"]+" "+E[i][j]["source"]
                                  print 'ev0=',ev 
                                  try:
@@ -209,13 +317,21 @@ class Web(object):
                         if E[i][j]["source_tool"]=="opencv":
                            try:
                                if E[i][j]["source_click"]==1:
-                                  reset_elem_coord(driver,elem,E[i][j]["source"])
-                                  click_elem_by_offset(driver,elem,E[i][j]["coord"],E[i][j]["source_name"])
-                           except KeyError: pass
+                                  # set elements coordinates from canvas screenshot
+                                  # dinamically add elements coordinates on locator list
+                                  # Ecc is a dictionary with elements names keys and  
+                                  # elements centers coordinates values
+                                  # Ecc={"elem1":(xc1,yc1),"elem2":(xc2,yc2)...etc}
+                                  Ecc=self.get_elem_coord_from_img_with_opencv(test_name,locator.canvas_img)
+                                  # update locators file with element coordinates
+                                  E[i][j]["source_coord"]=Ecc[E[i][j]["source_name"]]
+                                  self.reset_elem_coord(elem,E[i][j]["source"])
+                                  self.click_elem_by_offset(elem,E[i][j]["source_coord"],E[i][j]["source_name"])
+                           except Exception as e: raise AssertionError(e)
                         elif E[i][j]["source_tool"]=="pyautogui":
                              try:
                                  if E[i][j]["source_screenshot"]==1 :
-                                    set_elem_screenshot(driver,test_name,elem,E[i][j]["source_img_name"])
+                                    self.set_elem_screenshot(test_name,elem,E[i][j]["source_img_name"])
                              except KeyError: pass
                              try:
                                  if E[i][j]["source_click"]==1 :
@@ -233,36 +349,36 @@ class Web(object):
                           try:
                               # if source is 'new window' switch to new window
                               if E[i][j]["source"]=="previous window":
-                                 driver.switch_to.window(driver.window_handles[0])
+                                 self.driver.switch_to.window(self.driver.window_handles[0])
                           except KeyError: pass
                           try:
                               # if source is 'new window' switch to new window
                               if E[i][j]["source"]=="new window":
-                                 driver.switch_to.window(driver.window_handles[1])
+                                 self.driver.switch_to.window(self.driver.window_handles[1])
                           except KeyError: pass
                           try:
                               # if source is 'new window' switch to new window
                               if E[i][j]["source"]=="active window":
-                                 driver.switch_to.window(driver.window_handles[-1])
+                                 self.driver.switch_to.window(self.driver.window_handles[-1])
                           except KeyError: pass
                           try:
                               if E[i][j]["source"]=="url":
-                                 driver.get(E[i][j]["url"])
+                                 self.driver.get(E[i][j]["url"])
                                  if "desktop" in browser:
                                     if "chrome" in browser:
-                                       driver.fullscreen_window()   
-                                    else:driver.maximize_window() 
+                                       self.driver.fullscreen_window()   
+                                    else:self.driver.maximize_window() 
                           except KeyError: pass   
                           try:
                               if E[i][j]["source"]=="close page":
-                                 driver.close()
+                                 self.driver.close()
                           except KeyError: pass         
                           try:
                               # if source is 'alert' chech text alert
                               if E[i][j]["source"]=="alert":
                                  try:
                                      from selenium.common.exceptions import TimeoutException
-                                     WebDriverWait(driver,10).until(EC.alert_is_present(),\
+                                     WebDriverWait(self.driver,10).until(EC.alert_is_present(),\
                                      'Timed out waiting for PA creation '+' confirmation popup to appear.')
                                      alert = driver.switch_to.alert
                                      alert.accept()
@@ -281,7 +397,7 @@ class Web(object):
                           try:
                               if E[i][j]["source"]=="wait":
                                  print 'Wait '+str(E[i][j]["seconds"])+' sec !'
-                                 WebDriverWait(driver,E[i][j]["seconds"])
+                                 WebDriverWait(self.driver,E[i][j]["seconds"])
                                  sleep(E[i][j]["seconds"])
                           except KeyError: pass
                           try:
@@ -294,28 +410,28 @@ class Web(object):
                   # drop-down sucks drop-down will be made by pyautogui
                   if "target" in E[i][j].keys():
                      if "target_locator_type" and "target_locator_string" in E[i][j].keys():
-                        elem=get_elem(driver,E[i][j]["target_locator_type"],E[i][j]["target_locator_string"])
+                        elem=self.get_elem(E[i][j]["target_locator_type"],E[i][j]["target_locator_string"])
                         if E[i][j]["target_tool"]=="pyautogui":
                            try:
                                if E[i][j]["target_screenshot"]==1 :
-                                  set_elem_screenshot(driver,test_name,elem,E[i][j]["target_img_name"])
+                                  self.set_elem_screenshot(test_name,elem,E[i][j]["target_img_name"])
                            except KeyError:pass
                            try:
                                  if E[i][j]["target_click"]==1 :
                                     #click_elem_pyautogui(E[i][j]["target_img_path"])
-                                    click_elem_pyautogui(test_name,E[i][j]["target_img_name"])
+                                    self.click_elem_pyautogui(test_name,E[i][j]["target_img_name"])
                                     print 'Mouse to: '+E[i][j]["target_name"]
                            except KeyError: pass
                            try:
                                  if E[i][j]["target_change"]==1 :
-                                    clear_elem_pyautogui(elem)
+                                    self.clear_elem_pyautogui(elem)
                                     print 'Clear: '+E[i][j]["target_name"]
-                                    set_elem_value_pyautogui(E[i][j]["target_changed value"])
+                                    self.set_elem_value_pyautogui(E[i][j]["target_changed value"])
                                     print 'Change value for : '+E[i][j]["target_name"]+" "+E[i][j]["target"]
                            except KeyError: pass
                            try:
                                  if E[i][j]["drag-drop"]==1 :
-                                    drag_on_target_pyautogui(test_name,E[i][j]["target_img_name"])
+                                    self.drag_on_target_pyautogui(test_name,E[i][j]["target_img_name"])
                                     print 'Drag : '+E[i][j]["source_name"]+' on '+E[i][j]["target_name"]
                            except KeyError:pass        
 
@@ -430,68 +546,12 @@ class Web(object):
 #     #ActionChains(driver).move_to_element_with_offset(elem,0,0).context_click().perform()
 #     ActionChains(driver).move_to_element_with_offset(elem,0,0).click().perform()
 #     print 'Reset : '+cv_name+' coordinates !'
-
-# def reset_elem_coord(driver,elem,source):
-#     #sleep(2)       
-#     #elem=WebDriverWait(driver,10).until(EC.visibility_of_element_located((By.XPATH,cv_xpath)))      
-#     #ActionChains(driver).move_to_element_with_offset(elem,0,0).context_click().perform()
-#     ActionChains(driver).move_to_element_with_offset(elem,0,0).click().perform()
-#     print 'Reset : '+source+' coordinates !'    
-
-# def click_elem_by_offset(driver,elem,(elem_coord),source_name):
-#     sleep(1)
-#     #canvas=driver.find_element_by_xpath(cv_xpath)     
-#     ActionChains(driver).move_to_element_with_offset(elem,elem_coord[0],elem_coord[1]).click().perform()  
-#     #ActionChains(driver).move_to_element_with_offset(canvas,obj_coord[0],obj_coord[1]).context_click().perform() 
-#     print "Click : "+source_name+" after it's coordinates !"  
-
-# def create_screenshots_dir(path):
-#     try:
-#         if not os.path.exists(path):
-#            os.mkdir(path)
-#     except OSError as e:os.remove(path);raise AssertionError(str(e))   
-
-     
+    
 # def close_test(error_type):
 #     if error_type=="bug":
 #        raise AssertionError('THIS IS A BUG ! I will close test !')    
 #     elif error_type=="concept error":
 #          raise AssertionError('THIS IS A CONCEPT ERROR ! I will close test !')       
-
-# def get_elem_value(driver,source,source_value,locator_type,locator_string):
-#     elem=get_elem(driver,locator_type,locator_string)            
-#     if source in ["check box","radio btn"]: 
-#        ev=elem.is_selected() 
-#     if source.__contains__("textctrl"): 
-#        ev=elem.get_attribute('value')
-#     if source == "drop-down":
-#        # selection 
-#        s= Select(elem)
-#        # var1
-#        #for opt in s.options:
-#        #    if opt.is_selected():
-#        #       cs= s.first_selected_option
-#        #       ev=cs.text 
-#        #    else:ev=""  
-#        #------------------
-#        # current selection
-#        # var2
-#        try:
-#            cs= s.first_selected_option
-#            ev=cs.text 
-#        except NoSuchElementException:
-#               ev=""      
-#     if source in ["grid cell","text"]:
-#        ev=elem.text    
-#        #ev=driver.find_element_by_xpath(elem_xpath).get_attribute('innerHTML')
-#     # SetField,SimpleBranch
-#     if source == "list":
-#        s= Select(elem)
-#        if source_value in [option.text for option in s.options]:
-#           ev=source_value
-#           s.select_by_visible_text(source_value)
-#        else:ev=None      
-#     return ev 
 
 # # update stages/(behaviors) and paths coordinates with coord. founded by open cv
 # def update_coord(BS,P,Lbs_coord,Lph_coord):
@@ -541,28 +601,7 @@ class Web(object):
 #        except Exception as EC:os.remove(path_to);print "Can't take screenshot ! "+str(EC)        
 #     else:raise AssertionError("SCREENSHOT IS TAKEN ONLY IN LOCAL TEST !")
 
-# # set element screenshot
-# def set_elem_screenshot(driver,test_name,elem,elem_img_name): 
-#     if running_test()=='LOCAL':
-#           elem_img_path=define_working_folders(test_name)[3]+elem_img_name
-#        #if not os.path.exists(elem_img_path):
-#           try: 
-#               driver.get_screenshot_as_file(elem_img_path) 
-#               x=elem.location['x']
-#               y=elem.location['y']
-#               w=elem.location['x']+elem.size['width']
-#               h=elem.location['y']+elem.size['height']
-#               img=Image.open(elem_img_path)
-#               if running_test.browser.__contains__("chrome"):
-#                  img=img.crop((x,y,w,h))
-#               if running_test.browser.__contains__("firefox"):
-#                  img=img.crop((x-5,y-5,w+5,h+5))
-#               if running_test.browser.__contains__("safari"):
-#                  img=img.crop((x,y,w,h))   
-#               img.save(elem_img_path)
-#           except Exception as EC:os.remove(elem_img_path);print "Can't take screenshot ! "+str(EC)      
-#     #else:raise AssertionError("SCREENSHOT IS TAKEN ONLY IN LOCAL TEST !")                        
-
+                  
 # # if we want a value for a element but elem is 
 # # not reachable by keyboard we will take value
 # # by elem.get_attribute("innerHTML")
@@ -643,11 +682,3 @@ class Web(object):
 #     test_screenshots_folder_name=define_working_folders(test_name)[3]
 #     create_screenshots_dir(screenshots_folder_name)
 #     create_screenshots_dir(test_screenshots_folder_name)
-
-# # if a canvas has elements inside we can find elements
-# #  coordinates from image screenshot with opencv
-# def get_elem_coord_from_img_with_opencv(test_name,source_img_name):
-#     source_img_path=define_working_folders(test_name)[3]+source_img_name  
-#     # dictionary with element key and center coordinates value
-#     Ecc=opencv.find_elements(source_img_path)
-#     return Ecc

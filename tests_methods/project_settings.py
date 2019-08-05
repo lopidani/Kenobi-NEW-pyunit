@@ -20,6 +20,7 @@ class ProjectSettings(object):
       @property
       def test_parameters(self):
           if self.test_name=="TC_proba":self.test_part="full test";self.test_locator="TCproba_locators"
+          if self.test_name=="TC_Beh_Integration_Form_CMandatory":self.test_part="full test";self.test_locator="bh_cmandatory_locators"    
           return self.test_part,self.test_locator
 
 def running_test():
