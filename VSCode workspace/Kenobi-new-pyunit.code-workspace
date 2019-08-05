@@ -1,0 +1,45 @@
+{
+ "folders": [{"path": "/Users/blackdesign/Desktop/Kenobi_lopidani_new/TC_Kenobi_python"}],
+ "settings": {
+		"git.enabled": true,
+		"editor.minimap.enabled": false,
+		"workbench.sideBar.location": "left",
+		"breadcrumbs.enabled": false,
+		"editor.renderControlCharacters": false,
+		"editor.renderWhitespace": "none",
+		"workbench.statusBar.visible": true,
+		"workbench.activityBar.visible": true,
+		"editor.fontSize": 15,                
+		"editor.lineHeight": 16,               
+		"terminal.integrated.fontFamily": "Monospace",
+		"terminal.integrated.fontSize": 16,
+		"terminal.integrated.fontWeightBold": "normal",
+		"workbench.panel.defaultLocation": "right",
+		"terminal.integrated.rendererType": "dom",
+		"workbench.colorCustomizations" :{
+			"terminal.foreground" :"#fdc200",
+			"terminal.background" :"#383737",
+						 },                                   
+		//"workbench.startupEditor": "newUntitledFile",
+		"python.pythonPath":"/usr/local/bin/python",
+		"python.testing.cwd":"${workspaceFolder}",
+		"python.testing.nosetestsEnabled": false,
+		"python.testing.pytestEnabled": false,
+		"python.testing.unittestEnabled": true,
+		"python.testing.autoTestDiscoverOnSaveEnabled": false,
+		// highlight modified tabs puts a colorful line at the top of the tab
+		"workbench.editor.highlightModifiedTabs": true,
+		// change the cursor style
+		"editor.cursorStyle": "line",
+		// trim any extra newlines at the end 
+		"files.trimFinalNewlines": true,
+		"python.testing.unittestArgs": [
+			"-v",
+			"-s", "tests_files", 
+			"-p","TC*.py"
+		],
+		"files.autoSave": "off",
+		"workbench.enableExperiments": false,
+		"workbench.settings.enableNaturalLanguageSearch": false,
+	}
+}

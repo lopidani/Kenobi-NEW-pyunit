@@ -1,0 +1,55 @@
+{
+	"folders": [
+		{
+			"path": "/Users/blackdesign/Desktop/Kenobi_lopidani_old/TC_Kenobi_python"
+		}
+	],
+	"settings": {
+		"git.enabled": true,
+		"editor.minimap.enabled": false,
+		"workbench.sideBar.location": "left",
+		"breadcrumbs.enabled": false,
+		"editor.renderControlCharacters": false,
+		"editor.renderWhitespace": "none",
+		"workbench.statusBar.visible": true,
+		"workbench.activityBar.visible": true,
+		"editor.fontSize": 15,                   //14
+		//"editor.fontWeight": "bold",
+		//"editor.fontFamily": "Bootstrap",
+		"editor.lineHeight": 16,                 //15
+		"terminal.integrated.fontFamily": "Monospace",
+		"terminal.integrated.fontSize": 16,      //15
+		//"terminal.integrated.enableBold": true,
+		"terminal.integrated.fontWeightBold": "normal",
+		"workbench.panel.defaultLocation": "right",
+		"terminal.integrated.rendererType": "dom",
+		//"workbench.colorTheme": "Dark",
+		//"editor.fontFamily": "Source Code Pro",//"Monospace",//
+		//"workbench.colorTheme": "Noctis",
+		"workbench.colorCustomizations" :{
+			"terminal.foreground" :"#fdc200",//"#F0E68C",//"#00FD61",
+			"terminal.background" : "#383737",
+										},                                   
+		"workbench.startupEditor": "newUntitledFile",
+		"python.pythonPath":"/usr/local/bin/python",
+		//"python.testing.cwd":"${workspaceFolder}",
+		"python.testing.nosetestsEnabled": false,
+		"python.testing.pytestEnabled": false,
+		"python.testing.unittestEnabled": true,
+		"python.testing.autoTestDiscoverOnSaveEnabled": false,
+		// highlight modified tabs puts a colorful line at the top of the tab
+		"workbench.editor.highlightModifiedTabs": true,
+		// change the cursor style
+		"editor.cursorStyle": "block",
+		// trim any extra newlines at the end 
+		"files.trimFinalNewlines": true,
+		"python.testing.unittestArgs": [
+			"-v",
+			"-s","./", 
+			"-p","TC*.py"
+		],
+		"files.autoSave": "off",
+		"workbench.enableExperiments": false,
+		"workbench.settings.enableNaturalLanguageSearch": false,
+	}
+}
