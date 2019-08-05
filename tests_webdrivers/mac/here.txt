@@ -1,0 +1,1 @@
+In mac folder we have : chromedriver and geckodriver for browsers versions !
