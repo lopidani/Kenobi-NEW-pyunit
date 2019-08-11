@@ -5,6 +5,8 @@ import cv2
 BRc=[]
 BRcc=[]
 Ecc={}
+
+# get elements coordinates inside canvas 
 def find_elements(img_path):
     global BRc,BRcc
     src=cv2.imread(img_path)

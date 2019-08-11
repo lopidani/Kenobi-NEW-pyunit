@@ -10,9 +10,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# CHANGEABLE ------------------
 browsers=["chrome desktop mac","safari desktop mac","firefox desktop mac","chrome desktop win","firefox desktop win","ie desktop win","edge desktop win",
 "chrome phone android 7","chrome phone android 8","chrome phone android 9","safari phone ios 12",
 "safari phone ios 11","safari phone ios 10","safari tablet ios","chrome tablet android"]
+# NON-CHANGEABLE --------------
 test_name=__file__.rstrip('cd').split("/")[-1][:-3] if sys.platform=="darwin" else __file__.rstrip('cd').split("\\")[-1][:-3]   
 MyTest=project_settings.ProjectSettings(test_name)
 project_settings.running_test.name=test_name
@@ -21,8 +23,6 @@ test_part=MyTest.test_parameters[0]
 locator_folder=MyTest.project_folders[4][1:]
 locator_name=MyTest.test_parameters[1]
 
-# we have 15 browsers , so because I use PyUnit , we must dinamically 
-# generate 15 unittest clases in order that VSCode will discover those tests
 class TESTMETA(type):
       def __new__(mcs, name, bases, dict):
           def test_generator(browser):
@@ -62,10 +62,9 @@ class TESTMETA(type):
               return test
           
           for browser in browsers:
-              my_test = "test_%s" % browser
-              dict[my_test] = test_generator(browser)
+              test_n = "test_%s" % browser
+              dict[test_n] = test_generator(browser)
           return type.__new__(mcs, name, bases, dict)        
-
 
 class TEST(unittest.TestCase):
       __metaclass__ = TESTMETA

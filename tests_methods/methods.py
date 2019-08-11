@@ -265,7 +265,7 @@ class Web(object):
                         elem=self.get_elem(E[i][j]["source_locator_type"],E[i][j]["source_locator_string"])
                         if E[i][j]["source_tool"]=="selenium":
                            try:
-                              if E[i][j]["screenshot"]==1 :
+                              if E[i][j]["source_screenshot"]==1 :
                                  print 'Take screenshot of '+E[i][j]["source"]
                                  #self.set_elem_screenshot(test_name,elem,E[i][j]["source_img_name"])
                                  self.set_elem_screenshot(test_name,browser,elem,E[i][j]["source_img_name"])
@@ -301,10 +301,10 @@ class Web(object):
                               if E[i][j]["source_check"]==1:
                                  ev=self.get_elem_value(E[i][j]["source"],E[i][j]["source_value"],E[i][j]["source_locator_type"],E[i][j]["source_locator_string"]) 
                                  print "Check: "+ E[i][j]["source_name"]+" "+E[i][j]["source"]
-                                 print 'ev0=',ev 
-                                 try:
-                                     print 'ev1=',len(ev)
-                                 except :pass    
+                                 #print 'ev0=',ev 
+                                 #try:
+                                 #    print 'ev1=',len(ev)
+                                 #except :pass    
                                  if ev != E[i][j]["source_value"]:
                                     # quit_browser(driver)
                                     raise AssertionError("Alert ! "+E[i][j]["source_name"]+" "+E[i][j]["source"]+" changed it's default value!")                  
@@ -314,6 +314,21 @@ class Web(object):
                                  if E[i][j]["source_presence"]==False and elem is None:
                                     print 'The main element : '+E[i][j]["source"]+ ' is not present on page !'
                            except KeyError:pass
+                           #-----------------------
+                           # scroll
+                           if "source_scroll" in E[i][j].keys():
+                           #try:
+                               #if E[i][j]["source_scroll"]==1:
+                                  #driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                                  #driver.execute_script("window.scrollBy(0, -250);")
+                                  driver.execute_script("return arguments[0].scrollIntoView();",elem)
+                                  #elem.send_keys(Keys.PAGE_DOWN)
+                                  #ActionChains(self.driver).click_and_hold(elem).move_by_offset(0,30).perform()  
+                                  h=driver.execute_script("return document.body.scrollHeight")
+                                  print 'H=',h
+                                  print 'Scroll page !'
+                           #except KeyError: pass
+                           #-----------------------   
                         if E[i][j]["source_tool"]=="opencv":
                            try:
                                if E[i][j]["source_click"]==1:
@@ -332,6 +347,7 @@ class Web(object):
                              try:
                                  if E[i][j]["source_screenshot"]==1 :
                                     self.set_elem_screenshot(test_name,elem,E[i][j]["source_img_name"])
+                                    print 'S=',elem.size()
                              except KeyError: pass
                              try:
                                  if E[i][j]["source_click"]==1 :
