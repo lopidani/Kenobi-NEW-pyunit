@@ -69,22 +69,38 @@ class TESTMETA(type):
 
 class TEST(unittest.TestCase):
       __metaclass__ = TESTMETA
-      
+       
       def setUp(self):
           self.test_result = None
           self.driver = None
 
       def tearDown(self):
-          print 'Done with session %s'
-          if self.driver:
-             self.driver.quit()
-             print 'Quit driver'
+          #print 'Done with session %s'
+          #if self.driver:
+          #   print 'Quit driver'
+          #   self.driver.quit()
           if self.test_result is not None:
              if test_type == 'LOCAL':
                 print 'score: ', self.test_result
+                # driver.quit() hang up on some browsers (safari 12,IE,Edge) (a popup window "do you want to exit")
+                # de vazut process name for IE so Edge !
+                if running_test.browser in ("safari desktop mac","firefox desktop mac","edge desktop win","ie desktop win"):    
+                   print 'Quit browser !'
+                   for proc in psutil.process_iter(): 
+                       if running_test.browser.split(" ")[0] in proc.name():  
+                          proc.kill()
+                          break
+                else:
+                     if self.driver:
+                        print "Quit driver !"
+                        self.driver.quit()          
              if test_type == 'CBT':
-                self.api_session.put('https://crossbrowsertesting.com/api/v3/selenium/' + self.driver.session_id,
+                print 'Done with session %s'% self.driver.session_id
+                self.api_session.put('https://crossbrowsertesting.com/api/v3/selenium/'+self.driver.session_id,
                 data={'action': 'set_score', 'score': self.test_result})
+                # driver.quit() hang up on some browsers (safari 12,IE,Edge) (a popup window "do you want to exit")
+                # so we use CBT API v3
+                self.api_session.delete('https://crossbrowsertesting.com/api/v3/selenium/'+self.driver.session_id)
 
 if __name__ == '__main__':
    unittest.main()        
