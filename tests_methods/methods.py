@@ -317,20 +317,34 @@ class Web(object):
                            #-----------------------
                            # scroll
                            if "source_scroll" in E[i][j].keys():
+                              if E[i][j]["source_scroll"]==1:
                            #try:
                                #if E[i][j]["source_scroll"]==1:
-                                  #driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                                  #driver.execute_script("window.scrollBy(0, -250);")
-                                  driver.execute_script("return arguments[0].scrollIntoView();",elem)
-                                  #elem.send_keys(Keys.PAGE_DOWN)
-                                  #ActionChains(self.driver).click_and_hold(elem).move_by_offset(0,30).perform()  
-                                  h=driver.execute_script("return document.body.scrollHeight")
-                                  print 'H=',h
+                                  #driver.execute_script("window.scrollTo(document.body.scrollHeight,300);")
+                                  #driver.execute_script("window.scrollBy(0,250);")
+                                  #driver.execute_script("window.scrollTo(0,300);")
+                                  #html =driver.find_element_by_tag_name('html')
+                                  #html.send_keys(Keys.END)
+                                  #driver.execute_script("window.scrollTo(0, window.scrollY + 200);")
+
+                                  #driver.execute_script("return arguments[0].scrollIntoView();",elem)
+                                  #driver.execute_script("window.scrollTo(document.body.scrollHeight,0);")
+                                  
+                                  #ActionChains(driver).move_to_element_with_offset(elem,0,0).context_click().perform() 
+                                 #  e=driver.find_element_by_xpath("//canvas[@id='aPageGrid']")
+                                 #  driver.execute_script("return arguments[0].scrollIntoView();",e)
+                                 #  h=driver.execute_script("return document.body.scrollHeight")
+                                  #print 'H=',h
+
+                                 #  pyautogui.rightClick(600,400)
+                                 #  pyautogui.mouseDown()
+                                  pyautogui.scroll(-100, x=600, y=400)
+
                                   print 'Scroll page !'
                            #except KeyError: pass
                            #-----------------------   
                         if E[i][j]["source_tool"]=="opencv":
-                           try:
+                           #try:
                                if E[i][j]["source_click"]==1:
                                   # set elements coordinates from canvas screenshot
                                   # dinamically add elements coordinates on locator list
@@ -340,9 +354,10 @@ class Web(object):
                                   Ecc=self.get_elem_coord_from_img_with_opencv(test_name,locator.canvas_img)
                                   # update locators file with element coordinates
                                   E[i][j]["source_coord"]=Ecc[E[i][j]["source_name"]]
+                                  #self.driver.set_window_size(2000, 694)
                                   self.reset_elem_coord(elem,E[i][j]["source"])
                                   self.click_elem_by_offset(elem,E[i][j]["source_coord"],E[i][j]["source_name"])
-                           except Exception as e: raise AssertionError(e)
+                           #except Exception as e: raise AssertionError(e)
                         elif E[i][j]["source_tool"]=="pyautogui":
                              try:
                                  if E[i][j]["source_screenshot"]==1 :

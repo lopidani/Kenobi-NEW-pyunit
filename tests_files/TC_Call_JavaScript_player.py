@@ -56,11 +56,11 @@ class TESTMETA(type):
                             self.test_result = 'fail'
                             raise
               return test
-          
+
           for browser in browsers:
-              my_test= "test_%s" % browser
+              my_test = "test_%s"%browser.replace(" ","_")
               dict[my_test] = test_generator(browser)
-          return type.__new__(mcs, name, bases, dict)        
+          return type.__new__(mcs,name,bases,dict)      
 
 class TEST(unittest.TestCase):
       __metaclass__ = TESTMETA
@@ -70,19 +70,13 @@ class TEST(unittest.TestCase):
           self.driver = None
 
       def tearDown(self):
-          #print 'Done with session %s'
-          #if self.driver:
-          #   print 'Quit driver'
-          #   self.driver.quit()
           if self.test_result is not None:
              if test_type == 'LOCAL':
                 print 'score: ', self.test_result
-                # driver.quit() hang up on some browsers (safari 12,IE,Edge) (a popup window "do you want to exit")
-                # de vazut process name for IE so Edge !
                 if project_settings.running_test.browser in ("safari desktop mac","firefox desktop mac","edge desktop win","ie desktop win"):    
                    print 'Quit browser !'
                    for proc in psutil.process_iter(): 
-                       if project_settings.browser.split(" ")[0] in proc.name():  
+                       if project_settings.running_test.browser.split(" ")[0] in proc.name():  
                           proc.kill()
                           break
                 else:
@@ -93,8 +87,6 @@ class TEST(unittest.TestCase):
                 print 'Done with session %s'% self.driver.session_id
                 self.api_session.put('https://crossbrowsertesting.com/api/v3/selenium/'+self.driver.session_id,
                 data={'action': 'set_score', 'score': self.test_result})
-                # driver.quit() hang up on some browsers (safari 12,IE,Edge) (a popup window "do you want to exit")
-                # so we use CBT API v3
                 self.api_session.delete('https://crossbrowsertesting.com/api/v3/selenium/'+self.driver.session_id)
 
 if __name__ == '__main__':

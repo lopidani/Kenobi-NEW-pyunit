@@ -10,9 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-browsers=["chrome desktop mac","safari desktop mac","firefox desktop mac","chrome desktop win","firefox desktop win","ie desktop win","edge desktop win",
-"chrome phone android 7","chrome phone android 8","chrome phone android 9","safari phone ios 12",
-"safari phone ios 11","safari phone ios 10","safari tablet ios","chrome tablet android"]
+browsers=project_settings.browsers
 test_name=__file__.rstrip('cd').split("/")[-1][:-3] if sys.platform=="darwin" else __file__.rstrip('cd').split("\\")[-1][:-3]   
 MyTest=project_settings.ProjectSettings(test_name)
 project_settings.running_test.name=test_name
@@ -84,10 +82,10 @@ class TEST(unittest.TestCase):
                 print 'score: ', self.test_result
                 # driver.quit() hang up on some browsers (safari 12,IE,Edge) (a popup window "do you want to exit")
                 # de vazut process name for IE so Edge !
-                if running_test.browser in ("safari desktop mac","firefox desktop mac","edge desktop win","ie desktop win"):    
+                if project_settings.running_test.browser in ("safari desktop mac","firefox desktop mac","edge desktop win","ie desktop win"):    
                    print 'Quit browser !'
                    for proc in psutil.process_iter(): 
-                       if running_test.browser.split(" ")[0] in proc.name():  
+                       if project_settings.running_test.browser.split(" ")[0] in proc.name():  
                           proc.kill()
                           break
                 else:

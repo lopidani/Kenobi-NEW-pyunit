@@ -11,7 +11,7 @@ browser = project_settings.running_test.browser
 # LOGIN PERFECTFORMS DATAS
 url_player_desktop = 'https://testing.perfectforms.com'
 user ='userd@pf.com'
-passw ='qqqqqq'
+passw ='qaqaqa'
 greet_win_xpath="//a[contains(.,'Exit')]"
 hlp_win_xpath="(//button[contains(.,'Close')])[2]"
 edit_form_xpath="/html[1]/body[1]/div[1]/aside[1]/div[3]/div[1]/div[1]/div[1]"
@@ -26,6 +26,8 @@ cls_hlp_win_xpath="(//button[@class='greeting-button close-help-center'])[1]"
 txtctrl_xpath="//div[@id='PFXX6564441752806096896']"
 txtctrl_is_click_xpath="//a[@role='button'][contains(.,'Text Input is clicked')]"
 canvas_xpath="//canvas[@id='aPageSel']"
+#canvas_xpath="//div[@id='aForm']"
+#canvas_xpath="//canvas[@id='aPageGrid']"
               
 # DASHBORD LOCATORS
 file_xpath="/html[1]/body[1]/div[1]/div[1]/header[1]/div[1]/div[3]/ul[1]/li[1]/a[1]"
@@ -69,7 +71,7 @@ auto_sum_textctrl_xpath="//textarea[@id='summary']"
 #-----------------------------------
 # SCREENSHOTS NAMES
 if sys.platform=="win32":canvas_img="\\scroll_test_canvas.png"
-elif sys.platform=="darwin":canvas_img="/scroll_test_canvas.png"
+elif sys.platform=="darwin":canvas_img1="/scroll_test_canvas1.png";canvas_img2="/scroll_test_canvas2.png"
 #-----------------------------------
 # EVERY STAGE (PART OF TEST TO INTERACT WITH ELEMENTS) IS A LIST OF DICTIONARY
 # to click: "click":1, to check: "check":1, to change: "change":1 , to clear: "clear":1
@@ -130,10 +132,15 @@ def get_elements(browser):
                  ] 
        # work with canvas - take canvas screenshot and find elements in canvas with opencv adter coordinates 
        Ecnv_img=[
-       {"source":"canvas","source_name":'Scroll test canvas',"source_locator_type":"xpath","source_locator_string":canvas_xpath,\
-        "source_tool":"selenium","source_click":0,"source_check":0,"source_change":0,"source_screenshot":1,"source_img_name":canvas_img},
-       {"source":"canvas","source_name":'scroll canvas',"source_locator_type":"xpath","source_locator_string":canvas_xpath,\
-        "source_tool":"selenium","source_scroll":1},
+       {"source":"canvas","source_name":'canvas',"source_locator_type":"xpath","source_locator_string":canvas_xpath,\
+        "source_tool":"selenium","source_click":0,"source_check":0,"source_change":0,"source_screenshot":1,\
+        "source_scroll":0,"source_img_name":canvas_img1},
+       {"source":"canvas","source_name":'canvas',"source_locator_type":"xpath","source_locator_string":canvas_xpath,\
+        "source_tool":"selenium","source_click":0,"source_check":0,"source_change":0,"source_screenshot":0,\
+        "source_scroll":1}, 
+       {"source":"canvas","source_name":'canvas',"source_locator_type":"xpath","source_locator_string":canvas_xpath,\
+        "source_tool":"selenium","source_click":0,"source_check":0,"source_change":0,"source_screenshot":1,\
+        "source_scroll":0,"source_img_name":canvas_img2}, 
        {"source":"wait","seconds":3},  
                 
                 ] 
@@ -144,7 +151,7 @@ def get_elements(browser):
        
        Ecnv_elem1=[
        {"source":"canvas","source_name":"elem1","source_locator_type":"xpath","source_locator_string":canvas_xpath,\
-       "source_coord":(),"source_click":1,"source_tool":"opencv","source_img_name":canvas_img},
+       "source_coord":(),"source_click":1,"source_tool":"opencv","source_img_name":canvas_img1},
        {"source":"grid cell","source_name":"Mandatory grid cell","source_value":"Text Input 1","source_locator_type":"xpath",\
        "source_locator_string":grid_cell_txtinput1_xpath,"source_tool":"selenium","source_click":1,"source_check":1},
        {"source":"radio btn","source_name":"Show Default Message","source_value":True,"source_locator_type":"xpath",\
@@ -160,7 +167,7 @@ def get_elements(browser):
                  ]  
        Ecnv_elem2=[
        {"source":"canvas","source_name":"elem2","source_locator_type":"xpath","source_locator_string":canvas_xpath,\
-       "source_coord":(),"source_click":1,"source_tool":"opencv","source_img_name":canvas_img},
+       "source_coord":(),"source_click":1,"source_tool":"opencv","source_img_name":canvas_img1},
                  ]        
        
        
